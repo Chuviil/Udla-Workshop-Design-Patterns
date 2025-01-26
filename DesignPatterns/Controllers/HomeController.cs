@@ -7,6 +7,8 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
+using DesignPatterns.Factories;
+using DesignPatterns.ModelBuilders;
 
 namespace DesignPatterns.Controllers
 {
@@ -16,7 +18,22 @@ namespace DesignPatterns.Controllers
 
         private readonly IVehicleRepository _vehicleRepository;
 
-        public HomeController(IVehicleRepository vehicleRepository,ILogger<HomeController> logger)
+        private CarFactory chooseFactory(string vehicle)
+        {
+            switch (vehicle)
+            {
+                case "Mustang":
+                    return new FordMustangFactory();
+                case "Explorer":
+                    return new FordExplorerFactory();
+                case "Escape":
+                    return new FordEscapeFactory();
+                default:
+                    throw new NotImplementedException();
+            }
+        }
+
+        public HomeController(IVehicleRepository vehicleRepository, ILogger<HomeController> logger)
         {
             _vehicleRepository = vehicleRepository;
             _logger = logger;
@@ -35,14 +52,24 @@ namespace DesignPatterns.Controllers
         [HttpGet]
         public IActionResult AddMustang()
         {
-            _vehicleRepository.AddVehicle(new Car("red","Ford","Mustang"));
+            CarFactory factory = chooseFactory("Mustang");
+            _vehicleRepository.AddVehicle(factory.Create());
             return Redirect("/");
         }
 
         [HttpGet]
         public IActionResult AddExplorer()
         {
-            _vehicleRepository.AddVehicle(new Car("red", "Ford", "Explorer"));
+            CarFactory factory = chooseFactory("Explorer");
+            _vehicleRepository.AddVehicle(factory.Create());
+            return Redirect("/");
+        }
+        
+        [HttpGet]
+        public IActionResult AddEscape()
+        {
+            CarFactory factory = chooseFactory("Escape");
+            _vehicleRepository.AddVehicle(factory.Create());
             return Redirect("/");
         }
 
@@ -55,18 +82,16 @@ namespace DesignPatterns.Controllers
                 vehicle.StartEngine();
                 return Redirect("/");
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 ViewBag.ErrorMessage = ex.Message;
                 return Redirect($"/?error={ex.Message}");
             }
-          
         }
 
         [HttpGet]
         public IActionResult AddGas(string id)
         {
-
             try
             {
                 var vehicle = _vehicleRepository.Find(id);
@@ -89,13 +114,11 @@ namespace DesignPatterns.Controllers
                 vehicle.StopEngine();
                 return Redirect("/");
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 ViewBag.ErrorMessage = ex.Message;
                 return Redirect($"/?error={ex.Message}");
             }
-           
-           
         }
 
 
